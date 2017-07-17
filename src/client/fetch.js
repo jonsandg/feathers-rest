@@ -12,6 +12,8 @@ export default class Service extends Base {
       fetchOptions.body = JSON.stringify(options.body);
     }
 
+    fetchOptions.credentials = 'same-origin';
+
     const fetch = this.connection;
 
     return fetch(options.url, fetchOptions)
