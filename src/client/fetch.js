@@ -9,7 +9,7 @@ export default class Service extends Base {
     }, this.options.headers, fetchOptions.headers);
 
     if (options.body) {
-      fetchOptions.body = JSON.stringify(options.body);
+      fetchOptions.body = fetchOptions.body instanceof FormData ? fetchOptions.body : JSON.stringify(options.body);
     }
 
     fetchOptions.credentials = 'same-origin';

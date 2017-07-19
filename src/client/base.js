@@ -15,15 +15,24 @@ export default class Base {
   }
 
   makeUrl (params, id) {
-    params = params || {};
+    let queryParams = params.query || {};
     let url = this.base;
 
     if (typeof id !== 'undefined' && id !== null) {
-      url += `/${id}`;
+      url = url.indexOf(':id') !== -1 ? url.replace(':id', id) : url + `/${id}`;
     }
 
-    if (Object.keys(params).length !== 0) {
-      const queryString = query.stringify(params);
+    if (typeof params.url !== 'undefined' && params.url !== null && typeof params.url === 'object') {
+
+      for (const key of Object.keys(params.url)) {
+        if (url.indexOf(`:${key}`) !== -1) {
+          url = url.replace(`:${key}`, params.url[key]);
+        }
+      }
+    }
+
+    if (Object.keys(queryParams).length !== 0) {
+      const queryString = query.stringify(queryParams);
 
       url += `?${queryString}`;
     }
@@ -33,7 +42,7 @@ export default class Base {
 
   find (params = {}) {
     return this.request({
-      url: this.makeUrl(params.query),
+      url: this.makeUrl(params),
       method: 'GET',
       headers: Object.assign({}, params.headers)
     }).catch(toError);
@@ -45,18 +54,27 @@ export default class Base {
     }
 
     return this.request({
-      url: this.makeUrl(params.query, id),
+      url: this.makeUrl(params, id),
       method: 'GET',
       headers: Object.assign({}, params.headers)
     }).catch(toError);
   }
 
   create (body, params = {}) {
+
+    let headers;
+
+    if (body instanceof FormData) {
+      headers = Object.assign({}, params.headers);
+    } else {
+      headers = Object.assign({ 'Content-Type': 'application/json' }, params.headers);
+    }
+
     return this.request({
-      url: this.makeUrl(params.query),
+      url: this.makeUrl(params),
       body,
       method: 'POST',
-      headers: Object.assign({ 'Content-Type': 'application/json' }, params.headers)
+      headers: headers
     }).catch(toError);
   }
 
@@ -65,11 +83,19 @@ export default class Base {
       return Promise.reject(new Error(`id for 'update' can not be undefined, only 'null' when updating multiple entries`));
     }
 
+    let headers;
+
+    if (body instanceof FormData) {
+      headers = Object.assign({}, params.headers);
+    } else {
+      headers = Object.assign({ 'Content-Type': 'application/json' }, params.headers);
+    }
+
     return this.request({
-      url: this.makeUrl(params.query, id),
+      url: this.makeUrl(params, id),
       body,
       method: 'PUT',
-      headers: Object.assign({ 'Content-Type': 'application/json' }, params.headers)
+      headers: headers
     }).catch(toError);
   }
 
@@ -78,11 +104,20 @@ export default class Base {
       return Promise.reject(new Error(`id for 'patch' can not be undefined, only 'null' when updating multiple entries`));
     }
 
+    let headers;
+
+    if (body instanceof FormData) {
+      headers = Object.assign({}, params.headers);
+    } else {
+      headers = Object.assign({ 'Content-Type': 'application/json' }, params.headers);
+    }
+
+
     return this.request({
-      url: this.makeUrl(params.query, id),
+      url: this.makeUrl(params, id),
       body,
       method: 'PATCH',
-      headers: Object.assign({ 'Content-Type': 'application/json' }, params.headers)
+      headers: headers
     }).catch(toError);
   }
 
@@ -92,7 +127,7 @@ export default class Base {
     }
 
     return this.request({
-      url: this.makeUrl(params.query, id),
+      url: this.makeUrl(params, id),
       method: 'DELETE',
       headers: Object.assign({}, params.headers)
     }).catch(toError);
